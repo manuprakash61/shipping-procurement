@@ -1,0 +1,297 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── MULTI-TENANT ─────────────────────────────────────────────────────────────
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  domain    String   @unique
+  logoUrl   String?
+  industry  String?
+  country   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users          User[]
+  searchSessions SearchSession[]
+  rfqs           RFQ[]
+  tenders        Tender[]
+  settings       CompanySettings?
+}
+
+model CompanySettings {
+  id             String  @id @default(cuid())
+  companyId      String  @unique
+  rfqTemplate    String? @db.Text
+  senderName     String?
+  senderEmail    String?
+  sendgridApiKey String? // encrypted at rest
+  hunterApiKey   String? // encrypted at rest
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id           String   @id @default(cuid())
+  companyId    String
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(MEMBER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company  Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  rfqsSent RFQ[]
+
+  @@index([companyId])
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+// ─── SEARCH & VENDORS ─────────────────────────────────────────────────────────
+
+model SearchSession {
+  id          String       @id @default(cuid())
+  companyId   String
+  query       String
+  region      String?
+  category    String?
+  status      SearchStatus @default(PENDING)
+  rawResults  Json?
+  createdAt   DateTime     @default(now())
+  completedAt DateTime?
+
+  company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  vendors Vendor[]
+
+  @@index([companyId])
+}
+
+enum SearchStatus {
+  PENDING
+  SEARCHING
+  ENRICHING
+  VERIFYING
+  COMPLETED
+  FAILED
+}
+
+model Vendor {
+  id              String  @id @default(cuid())
+  searchSessionId String
+  name            String
+  website         String?
+  description     String? @db.Text
+  country         String?
+  region          String?
+  logoUrl         String?
+
+  // Contact
+  phone   String?
+  address String?
+
+  // Ratings
+  googlePlaceId String?
+  googleRating  Float?
+  googleReviews Int?
+  googleMapsUrl String?
+
+  // Pricing
+  estimatedPrice String?
+  currency       String?
+
+  // AI metadata
+  aiSummary String?  @db.Text
+  aiScore   Float?
+  aiTags    String[]
+
+  createdAt DateTime @default(now())
+
+  searchSession SearchSession @relation(fields: [searchSessionId], references: [id], onDelete: Cascade)
+  emails        VendorEmail[]
+  rfqVendors    RFQVendor[]
+
+  @@index([searchSessionId])
+}
+
+model VendorEmail {
+  id       String      @id @default(cuid())
+  vendorId String
+  address  String
+  source   EmailSource
+
+  isPrimary Boolean @default(false)
+
+  verifiedAt          DateTime?
+  verificationStatus  EmailVerificationStatus @default(PENDING)
+  mxValid             Boolean?
+  domainMatch         Boolean?
+  formatValid         Boolean                 @default(true)
+  hunterScore         Int?
+  disposable          Boolean?
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorId, address])
+  @@index([vendorId])
+}
+
+enum EmailSource {
+  WEB_SCRAPED
+  HUNTER
+  AI_EXTRACTED
+  MANUAL
+}
+
+enum EmailVerificationStatus {
+  PENDING
+  VERIFIED
+  RISKY
+  INVALID
+}
+
+// ─── RFQ ──────────────────────────────────────────────────────────────────────
+
+model RFQ {
+  id              String    @id @default(cuid())
+  companyId       String
+  createdById     String
+  searchSessionId String?
+  subject         String
+  bodyHtml        String    @db.Text
+  bodyText        String    @db.Text
+  deadline        DateTime?
+  attachments     Json?
+  status          RFQStatus @default(DRAFT)
+  createdAt       DateTime  @default(now())
+  sentAt          DateTime?
+
+  company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy  User        @relation(fields: [createdById], references: [id])
+  rfqVendors RFQVendor[]
+  quotes     Quote[]
+
+  @@index([companyId])
+}
+
+enum RFQStatus {
+  DRAFT
+  SENT
+  PARTIALLY_REPLIED
+  FULLY_REPLIED
+  CLOSED
+}
+
+model RFQVendor {
+  id            String          @id @default(cuid())
+  rfqId         String
+  vendorId      String
+  emailSentTo   String
+  sendgridMsgId String?
+  status        RFQVendorStatus @default(PENDING)
+  sentAt        DateTime?
+  openedAt      DateTime?
+  repliedAt     DateTime?
+  bouncedAt     DateTime?
+
+  rfq    RFQ    @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  quote  Quote?
+
+  @@unique([rfqId, vendorId])
+  @@index([rfqId])
+}
+
+enum RFQVendorStatus {
+  PENDING
+  SENT
+  DELIVERED
+  OPENED
+  REPLIED
+  BOUNCED
+  FAILED
+}
+
+// ─── QUOTES ───────────────────────────────────────────────────────────────────
+
+model Quote {
+  id          String @id @default(cuid())
+  rfqId       String
+  rfqVendorId String @unique
+
+  vendorName    String
+  vendorEmail   String
+  rawEmailHtml  String? @db.Text
+  rawEmailText  String? @db.Text
+
+  price           Decimal?  @db.Decimal(12, 2)
+  currency        String?
+  leadTimeDays    Int?
+  validUntil      DateTime?
+  terms           String?   @db.Text
+  aiSummary       String?   @db.Text
+  aiExtractedData Json?
+
+  status     QuoteStatus @default(RECEIVED)
+  receivedAt DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  rfq       RFQ       @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  rfqVendor RFQVendor @relation(fields: [rfqVendorId], references: [id])
+  tender    Tender?
+
+  @@index([rfqId])
+}
+
+enum QuoteStatus {
+  RECEIVED
+  UNDER_REVIEW
+  SHORTLISTED
+  REJECTED
+  ACCEPTED
+}
+
+// ─── TENDERS ──────────────────────────────────────────────────────────────────
+
+model Tender {
+  id             String       @id @default(cuid())
+  companyId      String
+  quoteId        String       @unique
+  vendorName     String
+  vendorEmail    String
+  documentHtml   String       @db.Text
+  documentPdfUrl String?
+  subject        String
+  termsAndCond   String?      @db.Text
+  agreedPrice    Decimal?     @db.Decimal(12, 2)
+  currency       String?
+  deliveryDate   DateTime?
+  status         TenderStatus @default(DRAFT)
+  issuedAt       DateTime?
+  acknowledgedAt DateTime?
+  sendgridMsgId  String?
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  quote   Quote   @relation(fields: [quoteId], references: [id])
+
+  @@index([companyId])
+}
+
+enum TenderStatus {
+  DRAFT
+  ISSUED
+  ACKNOWLEDGED
+  COMPLETED
+  CANCELLED
+}
