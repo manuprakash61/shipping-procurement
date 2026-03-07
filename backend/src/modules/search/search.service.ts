@@ -1,5 +1,5 @@
 import { Queue, Worker, Job } from 'bullmq';
-import { redis } from '../../config/redis';
+import { redis, getBullMQConnection } from '../../config/redis';
 import { prisma } from '../../config/database';
 import { QUEUE_NAMES, SEARCH_STATUS_EVENTS } from '../../config/constants';
 import * as claudeService from '../../services/ai/claude.service';
@@ -11,7 +11,7 @@ import { AppError } from '../../middleware/errorHandler';
 import { parsePagination, paginationMeta } from '../../utils/pagination';
 
 // BullMQ queue
-const searchQueue = new Queue(QUEUE_NAMES.SEARCH, { connection: redis as any });
+const searchQueue = new Queue(QUEUE_NAMES.SEARCH, { connection: getBullMQConnection() });
 
 export function getSearchQueue() {
   return searchQueue;
@@ -239,7 +239,7 @@ export function startSearchWorker() {
         throw err;
       }
     },
-    { connection: redis as any, concurrency: 3 },
+    { connection: getBullMQConnection(), concurrency: 3 },
   );
 
   worker.on('failed', (job, err) => {
