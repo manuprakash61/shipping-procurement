@@ -2,7 +2,7 @@ import client from './client';
 import { SearchSession } from '@/types';
 
 export const searchApi = {
-  create: (data: { query: string; region?: string }) =>
+  create: (data: { query: string; region?: string; countryCode?: string }) =>
     client.post<SearchSession>('/search', data).then((r) => r.data),
 
   get: (sessionId: string) =>

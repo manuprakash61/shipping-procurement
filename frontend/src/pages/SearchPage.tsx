@@ -40,13 +40,13 @@ export default function SearchPage() {
 
   const eventSourceRef = useRef<EventSource | null>(null);
 
-  const handleSearch = async (query: string, region?: string) => {
+  const handleSearch = async (query: string, region?: string, countryCode?: string) => {
     setLoading(true);
     clearSelection();
     setSearchProgress(null);
 
     try {
-      const session = await searchApi.create({ query, region });
+      const session = await searchApi.create({ query, region, countryCode });
       setCurrentSession({ ...session, vendors: [] });
 
       // Open SSE stream — pass token as query param (EventSource can't set headers)

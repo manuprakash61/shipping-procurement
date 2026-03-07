@@ -11,6 +11,7 @@ export interface SerpResult {
 export async function searchWeb(
   query: string,
   numResults = 20,
+  options?: { countryCode?: string; location?: string },
 ): Promise<SerpResult[]> {
   if (!SERPAPI_KEY) {
     console.warn('[SerpAPI] No API key configured — returning empty results');
@@ -22,6 +23,8 @@ export async function searchWeb(
     api_key: SERPAPI_KEY,
     num: String(numResults),
     engine: 'google',
+    ...(options?.countryCode ? { gl: options.countryCode } : {}),
+    ...(options?.location ? { location: options.location } : {}),
   });
 
   const response = await fetch(`${SERPAPI_BASE}?${params.toString()}`);

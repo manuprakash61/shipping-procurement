@@ -5,8 +5,8 @@ import * as searchService from './search.service';
 
 export async function createSearch(req: Request, res: Response, next: NextFunction) {
   try {
-    const { query, region } = CreateSearchSchema.parse(req.body);
-    const session = await searchService.createSearchSession(req.user!.companyId, query, region);
+    const { query, region, countryCode } = CreateSearchSchema.parse(req.body);
+    const session = await searchService.createSearchSession(req.user!.companyId, query, region, countryCode);
     res.status(201).json(session);
   } catch (err) {
     next(err);

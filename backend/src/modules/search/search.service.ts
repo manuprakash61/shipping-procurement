@@ -22,12 +22,12 @@ async function emitSSE(sessionId: string, event: string, data: Record<string, un
   await redis.publish(`search:${sessionId}`, JSON.stringify({ event, data }));
 }
 
-export async function createSearchSession(companyId: string, query: string, region?: string) {
+export async function createSearchSession(companyId: string, query: string, region?: string, countryCode?: string) {
   const session = await prisma.searchSession.create({
     data: { companyId, query, region, status: 'PENDING' },
   });
 
-  await searchQueue.add('process-search', { sessionId: session.id, query, region, companyId });
+  await searchQueue.add('process-search', { sessionId: session.id, query, region, countryCode, companyId });
 
   return session;
 }
@@ -74,8 +74,8 @@ export async function deleteSearchSession(sessionId: string, companyId: string) 
 export function startSearchWorker() {
   const worker = new Worker(
     QUEUE_NAMES.SEARCH,
-    async (job: Job<{ sessionId: string; query: string; region?: string; companyId: string }>) => {
-      const { sessionId, query, region } = job.data;
+    async (job: Job<{ sessionId: string; query: string; region?: string; countryCode?: string; companyId: string }>) => {
+      const { sessionId, query, region, countryCode } = job.data;
 
       try {
         // Stage 1: Interpret query
@@ -97,8 +97,9 @@ export function startSearchWorker() {
           ),
         ];
 
+        const serpOptions = countryCode ? { countryCode, location: region } : undefined;
         const allResults = await Promise.all(
-          searchQueries.map((q) => serpApiService.searchWeb(q, 10)),
+          searchQueries.map((q) => serpApiService.searchWeb(q, 10, serpOptions)),
         );
         const flatResults = allResults.flat();
 
