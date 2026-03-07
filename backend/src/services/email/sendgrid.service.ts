@@ -1,13 +1,21 @@
-import sgMail from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY ?? '');
+const FROM_EMAIL = process.env.GMAIL_USER ?? process.env.SENDGRID_FROM_EMAIL ?? 'noreply@example.com';
+const FROM_NAME = process.env.FROM_NAME ?? process.env.SENDGRID_FROM_NAME ?? 'ShipProcure';
 
-const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL ?? 'noreply@example.com';
-const FROM_NAME = process.env.SENDGRID_FROM_NAME ?? 'ShipProcure';
-const INBOUND_HOST = process.env.SENDGRID_INBOUND_PARSE_HOST ?? 'inbound.example.com';
+function createTransporter() {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
+}
 
-export function buildRFQReplyTo(rfqId: string, vendorId: string): string {
-  return `replies+rfq_${rfqId}_vendor_${vendorId}@${INBOUND_HOST}`;
+// Kept for compatibility — replies go to FROM_EMAIL since inbound parse is not available with Gmail
+export function buildRFQReplyTo(_rfqId: string, _vendorId: string): string {
+  return FROM_EMAIL;
 }
 
 export interface SendRFQParams {
@@ -21,22 +29,17 @@ export interface SendRFQParams {
 
 export async function sendRFQEmail(params: SendRFQParams): Promise<string | null> {
   try {
-    const [response] = await sgMail.send({
+    const transporter = createTransporter();
+    const info = await transporter.sendMail({
       to: params.to,
-      from: { email: FROM_EMAIL, name: FROM_NAME },
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
       replyTo: buildRFQReplyTo(params.rfqId, params.vendorId),
       subject: params.subject,
       html: params.htmlBody,
-      customArgs: {
-        rfq_id: params.rfqId,
-        vendor_id: params.vendorId,
-      },
     });
-
-    const msgId = response.headers['x-message-id'] as string | undefined;
-    return msgId ?? null;
+    return info.messageId ?? null;
   } catch (err) {
-    console.error('[SendGrid] Failed to send RFQ:', err);
+    console.error('[Gmail] Failed to send RFQ:', err);
     return null;
   }
 }
@@ -51,38 +54,37 @@ export interface SendTenderParams {
 
 export async function sendTenderEmail(params: SendTenderParams): Promise<string | null> {
   try {
-    const msg: sgMail.MailDataRequired = {
+    const transporter = createTransporter();
+    const mailOptions: nodemailer.SendMailOptions = {
       to: params.to,
-      from: { email: FROM_EMAIL, name: FROM_NAME },
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
       subject: params.subject,
       html: params.htmlBody,
-      customArgs: { tender_id: params.tenderId },
     };
 
     if (params.pdfAttachment) {
-      msg.attachments = [
+      mailOptions.attachments = [
         {
-          content: params.pdfAttachment.content,
+          content: Buffer.from(params.pdfAttachment.content, 'base64'),
           filename: params.pdfAttachment.filename,
-          type: 'application/pdf',
-          disposition: 'attachment',
+          contentType: 'application/pdf',
         },
       ];
     }
 
-    const [response] = await sgMail.send(msg);
-    const msgId = response.headers['x-message-id'] as string | undefined;
-    return msgId ?? null;
+    const info = await transporter.sendMail(mailOptions);
+    return info.messageId ?? null;
   } catch (err) {
-    console.error('[SendGrid] Failed to send Tender:', err);
+    console.error('[Gmail] Failed to send Tender:', err);
     return null;
   }
 }
 
 export async function sendTestEmail(to: string): Promise<void> {
-  await sgMail.send({
+  const transporter = createTransporter();
+  await transporter.sendMail({
     to,
-    from: { email: FROM_EMAIL, name: FROM_NAME },
+    from: `${FROM_NAME} <${FROM_EMAIL}>`,
     subject: 'ShipProcure — Test Email',
     html: '<p>This is a test email from ShipProcure. Your email configuration is working correctly.</p>',
   });

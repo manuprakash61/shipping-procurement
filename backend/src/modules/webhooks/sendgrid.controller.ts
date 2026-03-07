@@ -126,39 +126,7 @@ export async function handleInboundEmail(req: Request, res: Response) {
   }
 }
 
-export async function handleSendgridEvent(req: Request, res: Response) {
-  try {
-    const events = req.body as Array<{
-      event: string;
-      sg_message_id: string;
-      timestamp: number;
-    }>;
-
-    for (const event of events) {
-      const msgId = event.sg_message_id?.split('.')[0];
-      if (!msgId) continue;
-
-      if (event.event === 'open') {
-        await prisma.rFQVendor.updateMany({
-          where: { sendgridMsgId: msgId },
-          data: { status: 'OPENED', openedAt: new Date(event.timestamp * 1000) },
-        });
-      } else if (event.event === 'bounce' || event.event === 'dropped') {
-        await prisma.rFQVendor.updateMany({
-          where: { sendgridMsgId: msgId },
-          data: { status: 'BOUNCED', bouncedAt: new Date(event.timestamp * 1000) },
-        });
-      } else if (event.event === 'delivered') {
-        await prisma.rFQVendor.updateMany({
-          where: { sendgridMsgId: msgId, status: 'SENT' },
-          data: { status: 'DELIVERED' },
-        });
-      }
-    }
-
-    res.status(200).json({ message: 'Events processed' });
-  } catch (err) {
-    console.error('[Events] Webhook error:', err);
-    res.status(200).json({ message: 'Error — acknowledged' });
-  }
+export async function handleSendgridEvent(_req: Request, res: Response) {
+  // Not applicable when using Gmail — kept for future provider migration
+  res.status(200).json({ message: 'Event tracking not available with current email provider' });
 }
