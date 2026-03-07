@@ -14,7 +14,7 @@ import { formatDate, formatCurrency, getStatusColor } from '@/utils/formatters';
 export default function QuotesPage() {
   const queryClient = useQueryClient();
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
-  const [rfqFilter, setRfqFilter] = useState<string | undefined>(undefined);
+  const [rfqFilter] = useState<string | undefined>(undefined);
 
   const { data, isLoading } = useQuery({
     queryKey: ['quotes', rfqFilter],

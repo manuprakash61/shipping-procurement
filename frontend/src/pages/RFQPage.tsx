@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { FileText, ChevronRight, Clock, Send, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { rfqApi } from '@/api/rfq.api';
-import { Badge } from '@/components/ui/Badge';
 import { staggerContainer, fadeInUp } from '@/utils/animations';
 import { formatDate, formatRelative, getStatusColor } from '@/utils/formatters';
 

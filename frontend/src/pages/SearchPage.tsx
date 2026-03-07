@@ -50,7 +50,7 @@ export default function SearchPage() {
       setCurrentSession({ ...session, vendors: [] });
 
       // Open SSE stream
-      const token = useAuthStore.getState().accessToken;
+      // token available via useAuthStore.getState().accessToken if needed
       const es = new EventSource(
         `/api/search/${session.id}/stream`,
         // Note: EventSource doesn't support custom headers natively
