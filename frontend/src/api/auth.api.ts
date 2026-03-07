@@ -2,7 +2,7 @@ import client from './client';
 import { AuthResponse } from '@/types';
 
 export const authApi = {
-  register: (data: { companyName: string; companyDomain: string; name: string; email: string; password: string }) =>
+  register: (data: { companyName: string; companyDomain: string; name: string; email: string; password: string; companyType: 'BUYER' | 'SUPPLIER' }) =>
     client.post<AuthResponse>('/auth/register', data).then((r) => r.data),
 
   login: (email: string, password: string) =>

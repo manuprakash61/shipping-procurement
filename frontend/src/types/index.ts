@@ -12,6 +12,7 @@ export interface Company {
   logoUrl?: string;
   industry?: string;
   country?: string;
+  companyType: 'BUYER' | 'SUPPLIER';
 }
 
 export interface AuthResponse {

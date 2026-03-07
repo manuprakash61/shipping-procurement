@@ -10,20 +10,26 @@ datasource db {
 // ─── MULTI-TENANT ─────────────────────────────────────────────────────────────
 
 model Company {
-  id        String   @id @default(cuid())
-  name      String
-  domain    String   @unique
-  logoUrl   String?
-  industry  String?
-  country   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String      @id @default(cuid())
+  name        String
+  domain      String      @unique
+  logoUrl     String?
+  industry    String?
+  country     String?
+  companyType CompanyType @default(BUYER)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   users          User[]
   searchSessions SearchSession[]
   rfqs           RFQ[]
   tenders        Tender[]
   settings       CompanySettings?
+}
+
+enum CompanyType {
+  BUYER
+  SUPPLIER
 }
 
 model CompanySettings {

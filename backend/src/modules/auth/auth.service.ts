@@ -11,6 +11,7 @@ export async function register(data: {
   name: string;
   email: string;
   password: string;
+  companyType?: 'BUYER' | 'SUPPLIER';
 }) {
   const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
   if (existingUser) throw new AppError(409, 'Email already registered');
@@ -26,6 +27,7 @@ export async function register(data: {
     data: {
       name: data.companyName,
       domain: data.companyDomain,
+      companyType: data.companyType ?? 'BUYER',
       settings: { create: {} },
       users: {
         create: {

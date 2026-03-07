@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Package, ArrowRight, AlertCircle } from 'lucide-react';
+import { Package, ArrowRight, AlertCircle, ShoppingCart, Truck } from 'lucide-react';
 import { authApi } from '@/api/auth.api';
 import { useAuthStore } from '@/store/auth.store';
 import { Button } from '@/components/ui/Button';
@@ -20,11 +20,13 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
+type CompanyType = 'BUYER' | 'SUPPLIER';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
   const [error, setError] = useState('');
+  const [companyType, setCompanyType] = useState<CompanyType>('BUYER');
 
   const {
     register,
@@ -35,7 +37,7 @@ export default function RegisterPage() {
   const onSubmit = async (data: FormData) => {
     try {
       setError('');
-      const result = await authApi.register(data);
+      const result = await authApi.register({ ...data, companyType });
       setAuth(result.user, result.company, result.accessToken, result.refreshToken);
       navigate('/dashboard');
     } catch (err: unknown) {
@@ -72,6 +74,56 @@ export default function RegisterPage() {
               <p className="text-sm text-red-600">{error}</p>
             </motion.div>
           )}
+
+          {/* Buyer / Supplier toggle */}
+          <div className="mb-6">
+            <p className="text-sm font-medium text-gray-700 mb-3">I am a...</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setCompanyType('BUYER')}
+                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                  companyType === 'BUYER'
+                    ? 'border-brand-500 bg-brand-50'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  companyType === 'BUYER' ? 'bg-brand-500' : 'bg-gray-100'
+                }`}>
+                  <ShoppingCart className={`w-5 h-5 ${companyType === 'BUYER' ? 'text-white' : 'text-gray-500'}`} />
+                </div>
+                <div className="text-center">
+                  <div className={`text-sm font-semibold ${companyType === 'BUYER' ? 'text-brand-700' : 'text-gray-700'}`}>
+                    Buyer
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5">I procure products or services</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCompanyType('SUPPLIER')}
+                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                  companyType === 'SUPPLIER'
+                    ? 'border-brand-500 bg-brand-50'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  companyType === 'SUPPLIER' ? 'bg-brand-500' : 'bg-gray-100'
+                }`}>
+                  <Truck className={`w-5 h-5 ${companyType === 'SUPPLIER' ? 'text-white' : 'text-gray-500'}`} />
+                </div>
+                <div className="text-center">
+                  <div className={`text-sm font-semibold ${companyType === 'SUPPLIER' ? 'text-brand-700' : 'text-gray-700'}`}>
+                    Supplier
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5">I supply products or services</div>
+                </div>
+              </button>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
