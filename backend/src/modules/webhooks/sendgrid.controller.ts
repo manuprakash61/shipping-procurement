@@ -105,7 +105,7 @@ export async function handleInboundEmail(req: Request, res: Response) {
         validUntil: extracted.validUntil ? new Date(extracted.validUntil) : undefined,
         terms: extracted.terms,
         aiSummary: extracted.summary,
-        aiExtractedData: extracted as Record<string, unknown>,
+        aiExtractedData: extracted as any,
         status: 'RECEIVED',
       },
     });

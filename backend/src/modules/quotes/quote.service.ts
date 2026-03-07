@@ -60,7 +60,7 @@ export async function reExtractQuote(quoteId: string, companyId: string) {
       validUntil: extracted.validUntil ? new Date(extracted.validUntil) : undefined,
       terms: extracted.terms,
       aiSummary: extracted.summary,
-      aiExtractedData: extracted as Record<string, unknown>,
+      aiExtractedData: extracted as any,
     },
   });
 }

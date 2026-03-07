@@ -11,7 +11,7 @@ import { AppError } from '../../middleware/errorHandler';
 import { parsePagination, paginationMeta } from '../../utils/pagination';
 
 // BullMQ queue
-const searchQueue = new Queue(QUEUE_NAMES.SEARCH, { connection: redis });
+const searchQueue = new Queue(QUEUE_NAMES.SEARCH, { connection: redis as any });
 
 export function getSearchQueue() {
   return searchQueue;
@@ -117,7 +117,7 @@ export function startSearchWorker() {
         // Stage 4: Enrich with Google Places + emails
         await prisma.searchSession.update({
           where: { id: sessionId },
-          data: { status: 'ENRICHING', rawResults: flatResults as unknown as Record<string, unknown>[] },
+          data: { status: 'ENRICHING', rawResults: flatResults as any },
         });
         await emitSSE(sessionId, SEARCH_STATUS_EVENTS.ENRICHING, {
           message: `Found ${vendors.length} vendors. Fetching ratings and contact details...`,
@@ -239,7 +239,7 @@ export function startSearchWorker() {
         throw err;
       }
     },
-    { connection: redis, concurrency: 3 },
+    { connection: redis as any, concurrency: 3 },
   );
 
   worker.on('failed', (job, err) => {
