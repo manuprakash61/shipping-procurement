@@ -93,7 +93,7 @@ export default function SearchPage() {
 
     // Step 1: Search marketplace (instant)
     try {
-      const result = await marketplaceApi.search({ q: query, country: region });
+      const result = await marketplaceApi.search({ q: query, country: region ?? countryCode });
       setMarketplaceResults(result.products);
     } catch {
       // marketplace search failure is non-blocking

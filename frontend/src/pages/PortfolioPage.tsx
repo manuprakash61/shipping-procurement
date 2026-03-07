@@ -345,7 +345,7 @@ export default function PortfolioPage() {
       <Modal isOpen={!!editProduct} onClose={() => setEditProduct(null)} title="Edit Product" size="lg">
         {editProduct && (
           <ProductForm
-            initial={editProduct}
+            initial={{ ...editProduct, price: editProduct.price ? Number(editProduct.price) : undefined }}
             onSave={(data) => updateMutation.mutate({ id: editProduct.id, data })}
             onCancel={() => setEditProduct(null)}
             saving={updateMutation.isPending}
