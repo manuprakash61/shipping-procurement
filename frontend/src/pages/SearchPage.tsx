@@ -49,13 +49,10 @@ export default function SearchPage() {
       const session = await searchApi.create({ query, region });
       setCurrentSession({ ...session, vendors: [] });
 
-      // Open SSE stream
-      // token available via useAuthStore.getState().accessToken if needed
-      const es = new EventSource(
-        `/api/search/${session.id}/stream`,
-        // Note: EventSource doesn't support custom headers natively
-        // Token is passed via cookie in production or use polling fallback
-      );
+      // Open SSE stream — pass token as query param (EventSource can't set headers)
+      const token = useAuthStore.getState().accessToken;
+      const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'https://shipping-procurement-production.up.railway.app/api';
+      const es = new EventSource(`${apiBase}/search/${session.id}/stream?token=${token}`);
       eventSourceRef.current = es;
 
       // Fallback: also poll every 3s
