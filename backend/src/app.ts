@@ -14,6 +14,8 @@ import quoteRoutes from './modules/quotes/quote.routes';
 import tenderRoutes from './modules/tenders/tender.routes';
 import webhookRoutes from './modules/webhooks/sendgrid.routes';
 import settingsRoutes from './modules/settings/settings.routes';
+import portfolioRoutes from './modules/portfolio/portfolio.routes';
+import marketplaceRoutes from './modules/marketplace/marketplace.routes';
 import { compareQuotes } from './modules/quotes/quote.controller';
 import { requireAuth } from './middleware/auth';
 import { startSearchWorker } from './modules/search/search.service';
@@ -77,6 +79,8 @@ app.use('/api/quotes', quoteRoutes);
 app.use('/api/tenders', tenderRoutes);
 app.use('/api/webhooks/sendgrid', webhookRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/marketplace', marketplaceRoutes);
 
 // Quote comparison (nested under RFQ path)
 app.get('/api/rfq/:rfqId/quotes/compare', requireAuth, compareQuotes);

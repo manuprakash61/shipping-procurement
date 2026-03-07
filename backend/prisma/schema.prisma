@@ -20,11 +20,12 @@ model Company {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  users          User[]
-  searchSessions SearchSession[]
-  rfqs           RFQ[]
-  tenders        Tender[]
-  settings       CompanySettings?
+  users            User[]
+  searchSessions   SearchSession[]
+  rfqs             RFQ[]
+  tenders          Tender[]
+  settings         CompanySettings?
+  supplierProducts SupplierProduct[]
 }
 
 enum CompanyType {
@@ -63,6 +64,30 @@ model User {
 enum UserRole {
   ADMIN
   MEMBER
+}
+
+// ─── SUPPLIER PORTFOLIO ───────────────────────────────────────────────────────
+
+model SupplierProduct {
+  id             String   @id @default(cuid())
+  companyId      String
+  name           String
+  description    String?  @db.Text
+  category       String
+  price          Decimal? @db.Decimal(12, 2)
+  currency       String?  @default("USD")
+  minOrderQty    Int?
+  leadTimeDays   Int?
+  certifications String[]
+  tags           String[]
+  isPublished    Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([category])
 }
 
 // ─── SEARCH & VENDORS ─────────────────────────────────────────────────────────

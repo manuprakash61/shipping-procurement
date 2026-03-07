@@ -9,11 +9,13 @@ import {
   Settings,
   LogOut,
   Package,
+  Briefcase,
+  Inbox,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { authApi } from '@/api/auth.api';
 
-const navItems = [
+const BUYER_NAV = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/search', icon: Search, label: 'Find Vendors' },
   { to: '/rfq', icon: FileText, label: 'RFQ Manager' },
@@ -22,9 +24,18 @@ const navItems = [
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
+const SUPPLIER_NAV = [
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/portfolio', icon: Briefcase, label: 'My Portfolio' },
+  { to: '/rfq', icon: Inbox, label: 'Incoming RFQs' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
+];
+
 export function Sidebar() {
   const { user, company, logout } = useAuthStore();
   const navigate = useNavigate();
+  const isSupplier = company?.companyType === 'SUPPLIER';
+  const navItems = isSupplier ? SUPPLIER_NAV : BUYER_NAV;
 
   const handleLogout = async () => {
     try {
@@ -47,6 +58,14 @@ export function Sidebar() {
             <div className="text-white font-bold text-base leading-tight">ShipProcure</div>
             <div className="text-dark-400 text-xs">{company?.name ?? 'Loading...'}</div>
           </div>
+        </div>
+        {/* Role badge */}
+        <div className="mt-2">
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+            isSupplier ? 'bg-amber-900/40 text-amber-400' : 'bg-brand-900/40 text-brand-400'
+          }`}>
+            {isSupplier ? 'SUPPLIER' : 'BUYER'}
+          </span>
         </div>
       </div>
 

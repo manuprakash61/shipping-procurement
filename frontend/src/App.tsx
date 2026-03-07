@@ -10,6 +10,7 @@ import RFQPage from '@/pages/RFQPage';
 import QuotesPage from '@/pages/QuotesPage';
 import TendersPage from '@/pages/TendersPage';
 import SettingsPage from '@/pages/SettingsPage';
+import PortfolioPage from '@/pages/PortfolioPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="quotes" element={<QuotesPage />} />
             <Route path="tenders" element={<TendersPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="portfolio" element={<PortfolioPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

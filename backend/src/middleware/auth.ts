@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/jwt';
+import { prisma } from '../config/database';
 
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   // Allow token via query param for SSE endpoints (EventSource can't set headers)
@@ -26,4 +27,20 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
     return;
   }
   next();
+}
+
+export async function requireSupplier(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const company = await prisma.company.findUnique({
+      where: { id: req.user!.companyId },
+      select: { companyType: true },
+    });
+    if (company?.companyType !== 'SUPPLIER') {
+      res.status(403).json({ error: 'Supplier account required' });
+      return;
+    }
+    next();
+  } catch {
+    res.status(500).json({ error: 'Internal server error' });
+  }
 }

@@ -10,6 +10,7 @@ import { tendersApi } from '@/api/tenders.api';
 import { staggerContainer, fadeInUp } from '@/utils/animations';
 import { formatRelative } from '@/utils/formatters';
 import { Badge } from '@/components/ui/Badge';
+import { ProcurementTracker, getProcurementStep } from '@/components/ui/ProcurementTracker';
 
 function StatCard({
   icon: Icon,
@@ -75,6 +76,24 @@ export default function DashboardPage() {
         </h1>
         <p className="text-gray-500 mt-1">{company?.name} — Procurement Dashboard</p>
       </motion.div>
+
+      {/* Procurement Pipeline Tracker (buyers only) */}
+      {company?.companyType !== 'SUPPLIER' && (
+        <motion.div variants={fadeInUp} initial="initial" animate="animate" className="mb-8">
+          <ProcurementTracker
+            currentStep={getProcurementStep({
+              hasSearch: (searchHistory?.meta?.total ?? 0) > 0,
+              hasRFQ: (rfqs?.meta?.total ?? 0) > 0,
+              hasQuotes: (quotes?.meta?.total ?? 0) > 0,
+              hasShortlisted: quotes?.quotes?.some((q: { status: string }) => q.status === 'SHORTLISTED'),
+              hasTender: (tenders?.meta?.total ?? 0) > 0,
+              tenderIssued: tenders?.tenders?.some((t: { status: string }) => t.status === 'ISSUED' || t.status === 'ACKNOWLEDGED' || t.status === 'COMPLETED'),
+              tenderAcknowledged: tenders?.tenders?.some((t: { status: string }) => t.status === 'ACKNOWLEDGED' || t.status === 'COMPLETED'),
+              tenderComplete: tenders?.tenders?.some((t: { status: string }) => t.status === 'COMPLETED'),
+            })}
+          />
+        </motion.div>
+      )}
 
       {/* Stats */}
       <motion.div
