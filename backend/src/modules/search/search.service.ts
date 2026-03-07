@@ -127,12 +127,12 @@ export function startSearchWorker() {
           vendors.map(async (v) => {
             const [placeData, serpEmails, hunterEmails] = await Promise.all([
               v.name ? placesService.findVendorRating(v.name, v.country) : null,
-              v.website ? serpApiService.findEmailsForDomain(v.website) : [],
-              v.website ? findEmailsByDomain(v.website.replace(/^www\./, '')) : [],
+              v.website ? serpApiService.findEmailsForDomain(v.website) : ([] as string[]),
+              v.website ? findEmailsByDomain(v.website.replace(/^www\./, '')) : ([] as string[]),
             ]);
 
             // Merge and deduplicate emails
-            const allEmails = [...new Set([...(v.emails ?? []), ...serpEmails, ...hunterEmails])];
+            const allEmails = [...new Set<string>([...(v.emails ?? []), ...serpEmails, ...hunterEmails])];
 
             return prisma.vendor.create({
               data: {

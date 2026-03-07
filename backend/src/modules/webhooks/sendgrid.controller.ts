@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../../config/database';
 import { extractQuoteData } from '../../services/ai/claude.service';
+import { QuoteExtractionResult } from '../../types';
 
 function parseRFQIds(recipient: string): { rfqId: string; vendorId: string } | null {
   // Format: replies+rfq_{rfqId}_vendor_{vendorId}@domain.com
@@ -75,14 +76,7 @@ export async function handleInboundEmail(req: Request, res: Response) {
     }
 
     // AI extraction
-    let extracted = {
-      price: undefined as number | undefined,
-      currency: undefined as string | undefined,
-      leadTimeDays: undefined as number | undefined,
-      validUntil: undefined as string | undefined,
-      terms: undefined as string | undefined,
-      summary: '',
-    };
+    let extracted: QuoteExtractionResult = {};
 
     try {
       extracted = await extractQuoteData(textBody || htmlBody);
