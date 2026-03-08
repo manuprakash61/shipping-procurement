@@ -45,6 +45,21 @@ export function formatResultsForClaude(results: SerpResult[]): string {
     .join('\n\n');
 }
 
+export async function searchWebSequential(
+  queries: string[],
+  numResults = 20,
+  options?: { countryCode?: string; location?: string },
+  delayMs = 500,
+): Promise<SerpResult[]> {
+  const results: SerpResult[] = [];
+  for (const q of queries) {
+    const r = await searchWeb(q, numResults, options);
+    results.push(...r);
+    if (delayMs > 0) await new Promise((res) => setTimeout(res, delayMs));
+  }
+  return results;
+}
+
 export async function findEmailsForDomain(domain: string): Promise<string[]> {
   if (!SERPAPI_KEY) return [];
 

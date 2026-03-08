@@ -102,10 +102,7 @@ export function startSearchWorker() {
             `${query} B2B supplier India`,
             ...interpretation.searchTerms.slice(0, 3).map((term) => `${term} supplier India`),
           ];
-          const wwResults = await Promise.all(
-            wwQueries.map((q) => serpApiService.searchWeb(q, 20, { countryCode: 'in' })),
-          );
-          flatResults = wwResults.flat();
+          flatResults = await serpApiService.searchWebSequential(wwQueries, 20, { countryCode: 'in' });
         } else {
           // Specific location: search that location first
           const locationQueries = [
@@ -115,10 +112,7 @@ export function startSearchWorker() {
             ),
           ];
           const serpOptions = countryCode ? { countryCode, location: region } : undefined;
-          const locationResults = await Promise.all(
-            locationQueries.map((q) => serpApiService.searchWeb(q, 20, serpOptions)),
-          );
-          flatResults = locationResults.flat();
+          flatResults = await serpApiService.searchWebSequential(locationQueries, 20, serpOptions);
 
           // Fallback to broader search only if no results found for the specific location
           if (flatResults.length === 0) {
@@ -129,10 +123,7 @@ export function startSearchWorker() {
               `${query} supplier vendor company`,
               ...interpretation.searchTerms.slice(0, 3).map((term) => `${term} B2B supplier`),
             ];
-            const fallbackResults = await Promise.all(
-              fallbackQueries.map((q) => serpApiService.searchWeb(q, 20)),
-            );
-            flatResults = fallbackResults.flat();
+            flatResults = await serpApiService.searchWebSequential(fallbackQueries, 20);
           }
         }
 
