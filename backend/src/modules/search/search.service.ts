@@ -90,16 +90,26 @@ export function startSearchWorker() {
         const interpretation = await claudeService.interpretSearchQuery(query, region);
 
         // Stage 2: SerpAPI searches
-        const searchQueries = [
-          `${query}${region ? ` ${region}` : ''} supplier vendor company`,
-          ...interpretation.searchTerms.slice(0, 2).map(
-            (term) => `${term}${region ? ` ${region}` : ''} B2B supplier`,
-          ),
-        ];
+        const isWorldwide = !region && !countryCode;
 
-        const serpOptions = countryCode ? { countryCode, location: region } : undefined;
+        const searchQueries = isWorldwide
+          ? [
+              `${query} supplier vendor company`,
+              `${query} manufacturer exporter Asia`,
+              `${query} supplier Europe Middle East`,
+              `${query} vendor Africa South America`,
+              ...interpretation.searchTerms.slice(0, 3).map((term) => `${term} B2B supplier`),
+            ]
+          : [
+              `${query}${region ? ` ${region}` : ''} supplier vendor company`,
+              ...interpretation.searchTerms.slice(0, 4).map(
+                (term) => `${term}${region ? ` ${region}` : ''} B2B supplier`,
+              ),
+            ];
+
+        const serpOptions = !isWorldwide && countryCode ? { countryCode, location: region } : undefined;
         const allResults = await Promise.all(
-          searchQueries.map((q) => serpApiService.searchWeb(q, 10, serpOptions)),
+          searchQueries.map((q) => serpApiService.searchWeb(q, 20, serpOptions)),
         );
         const flatResults = allResults.flat();
 
