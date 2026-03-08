@@ -32,6 +32,13 @@ const LOCATIONS: LocationOption[] = [
 
   { label: 'South Asia', value: '', isHeader: true },
   { label: 'India', value: 'India', countryCode: 'in' },
+  { label: 'Kerala, India', value: 'Kerala, India', countryCode: 'in' },
+  { label: 'Ernakulam, India', value: 'Ernakulam, Kerala, India', countryCode: 'in' },
+  { label: 'Kochi (Edakochi), India', value: 'Kochi, Kerala, India', countryCode: 'in' },
+  { label: 'Mumbai, India', value: 'Mumbai, Maharashtra, India', countryCode: 'in' },
+  { label: 'Delhi, India', value: 'Delhi, India', countryCode: 'in' },
+  { label: 'Chennai, India', value: 'Chennai, Tamil Nadu, India', countryCode: 'in' },
+  { label: 'Bangalore, India', value: 'Bangalore, Karnataka, India', countryCode: 'in' },
   { label: 'Pakistan', value: 'Pakistan', countryCode: 'pk' },
   { label: 'Bangladesh', value: 'Bangladesh', countryCode: 'bd' },
   { label: 'Sri Lanka', value: 'Sri Lanka', countryCode: 'lk' },

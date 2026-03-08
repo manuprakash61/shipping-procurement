@@ -94,7 +94,7 @@ export function startSearchWorker() {
 
         const searchQueries = isWorldwide
           ? [
-              `${query} supplier vendor company`,
+              `${query} supplier vendor company India`,
               `${query} manufacturer exporter India`,
               `${query} manufacturer exporter Asia`,
               `${query} supplier Europe Middle East`,
@@ -108,7 +108,12 @@ export function startSearchWorker() {
               ),
             ];
 
-        const serpOptions = !isWorldwide && countryCode ? { countryCode, location: region } : undefined;
+        // Worldwide defaults to India (gl=in) to avoid US-biased SerpAPI results
+        const serpOptions = isWorldwide
+          ? { countryCode: 'in' }
+          : countryCode
+            ? { countryCode, location: region }
+            : undefined;
         const allResults = await Promise.all(
           searchQueries.map((q) => serpApiService.searchWeb(q, 20, serpOptions)),
         );

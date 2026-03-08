@@ -25,6 +25,7 @@ Rules:
 - Deduplicate by website domain
 - Ignore directory listings, review sites, social profiles (LinkedIn company pages OK)
 - Only include actual vendor companies, not aggregators
+- If region is not "worldwide", ONLY include vendors headquartered or operating in {{region}}; skip any vendor from a different country or region
 - Return a JSON array of vendor objects
 
 Query context: {{query}} in region: {{region}}`;
