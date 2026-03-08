@@ -95,6 +95,7 @@ export function startSearchWorker() {
         const searchQueries = isWorldwide
           ? [
               `${query} supplier vendor company`,
+              `${query} manufacturer exporter India`,
               `${query} manufacturer exporter Asia`,
               `${query} supplier Europe Middle East`,
               `${query} vendor Africa South America`,
