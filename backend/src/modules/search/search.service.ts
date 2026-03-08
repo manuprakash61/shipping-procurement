@@ -99,10 +99,8 @@ export function startSearchWorker() {
           const wwQueries = [
             `${query} supplier vendor company India`,
             `${query} manufacturer exporter India`,
-            `${query} manufacturer exporter Asia`,
-            `${query} supplier Europe Middle East`,
-            `${query} vendor Africa South America`,
-            ...interpretation.searchTerms.slice(0, 3).map((term) => `${term} B2B supplier`),
+            `${query} B2B supplier India`,
+            ...interpretation.searchTerms.slice(0, 3).map((term) => `${term} supplier India`),
           ];
           const wwResults = await Promise.all(
             wwQueries.map((q) => serpApiService.searchWeb(q, 20, { countryCode: 'in' })),
@@ -147,7 +145,7 @@ export function startSearchWorker() {
         const vendors = await claudeService.extractVendorsFromSearchResults(
           formatted,
           query,
-          region,
+          isWorldwide ? 'India' : region,
         );
 
         // Stage 4: Enrich with Google Places + emails
