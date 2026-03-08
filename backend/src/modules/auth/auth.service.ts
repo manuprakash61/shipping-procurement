@@ -93,8 +93,9 @@ export async function refreshTokens(token: string) {
   const stored = await redis.get(`refresh:${payload.userId}`);
   if (stored !== token) throw new AppError(401, 'Refresh token revoked or expired');
 
-  const accessToken = signAccessToken(payload);
-  const refreshToken = signRefreshToken(payload);
+  const cleanPayload: JwtPayload = { userId: payload.userId, companyId: payload.companyId, role: payload.role };
+  const accessToken = signAccessToken(cleanPayload);
+  const refreshToken = signRefreshToken(cleanPayload);
   await redis.setex(`refresh:${payload.userId}`, 7 * 24 * 3600, refreshToken);
 
   return { accessToken, refreshToken };
