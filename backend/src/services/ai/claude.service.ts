@@ -49,8 +49,52 @@ export async function extractVendorsFromSearchResults(
     '{{region}}',
     region ?? 'worldwide',
   );
-  const response = await callClaude(systemPrompt, searchResults);
-  return parseJson<ExtractedVendor[]>(response);
+
+  // Use tool use to guarantee syntactically valid JSON output
+  const message = await client.messages.create({
+    model: MODEL,
+    max_tokens: 8192,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: searchResults }],
+    tools: [
+      {
+        name: 'submit_vendors',
+        description: 'Submit the list of extracted vendor companies',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            vendors: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  website: { type: 'string' },
+                  description: { type: 'string' },
+                  country: { type: 'string' },
+                  region: { type: 'string' },
+                  estimatedPrice: { type: 'string' },
+                  aiScore: { type: 'number' },
+                  aiTags: { type: 'array', items: { type: 'string' } },
+                  emails: { type: 'array', items: { type: 'string' } },
+                  phone: { type: 'string' },
+                },
+                required: ['name', 'website', 'description', 'country', 'region', 'aiScore', 'aiTags', 'emails'],
+              },
+            },
+          },
+          required: ['vendors'],
+        },
+      },
+    ],
+    tool_choice: { type: 'any' },
+  });
+
+  const toolUseBlock = message.content.find((b) => b.type === 'tool_use');
+  if (!toolUseBlock || toolUseBlock.type !== 'tool_use') {
+    return [];
+  }
+  return ((toolUseBlock.input as { vendors: ExtractedVendor[] }).vendors ?? []);
 }
 
 export async function extractEmailsFromText(text: string): Promise<string[]> {
