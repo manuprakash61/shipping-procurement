@@ -23,6 +23,9 @@ import { startSearchWorker } from './modules/search/search.service';
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
+// Trust Railway/Vercel proxy so express-rate-limit reads X-Forwarded-For correctly
+app.set('trust proxy', 1);
+
 // Security
 app.use(helmet());
 const allowedOrigins = [

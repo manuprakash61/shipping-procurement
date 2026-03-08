@@ -92,32 +92,51 @@ export function startSearchWorker() {
         // Stage 2: SerpAPI searches
         const isWorldwide = !region && !countryCode;
 
-        const searchQueries = isWorldwide
-          ? [
-              `${query} supplier vendor company India`,
-              `${query} manufacturer exporter India`,
-              `${query} manufacturer exporter Asia`,
-              `${query} supplier Europe Middle East`,
-              `${query} vendor Africa South America`,
-              ...interpretation.searchTerms.slice(0, 3).map((term) => `${term} B2B supplier`),
-            ]
-          : [
-              `${query}${region ? ` ${region}` : ''} supplier vendor company`,
-              ...interpretation.searchTerms.slice(0, 4).map(
-                (term) => `${term}${region ? ` ${region}` : ''} B2B supplier`,
-              ),
-            ];
+        let flatResults: Awaited<ReturnType<typeof serpApiService.searchWeb>>;
 
-        // Worldwide defaults to India (gl=in) to avoid US-biased SerpAPI results
-        const serpOptions = isWorldwide
-          ? { countryCode: 'in' }
-          : countryCode
-            ? { countryCode, location: region }
-            : undefined;
-        const allResults = await Promise.all(
-          searchQueries.map((q) => serpApiService.searchWeb(q, 20, serpOptions)),
-        );
-        const flatResults = allResults.flat();
+        if (isWorldwide) {
+          // Worldwide: India-first queries, gl=in to avoid US-bias
+          const wwQueries = [
+            `${query} supplier vendor company India`,
+            `${query} manufacturer exporter India`,
+            `${query} manufacturer exporter Asia`,
+            `${query} supplier Europe Middle East`,
+            `${query} vendor Africa South America`,
+            ...interpretation.searchTerms.slice(0, 3).map((term) => `${term} B2B supplier`),
+          ];
+          const wwResults = await Promise.all(
+            wwQueries.map((q) => serpApiService.searchWeb(q, 20, { countryCode: 'in' })),
+          );
+          flatResults = wwResults.flat();
+        } else {
+          // Specific location: search that location first
+          const locationQueries = [
+            `${query}${region ? ` ${region}` : ''} supplier vendor company`,
+            ...interpretation.searchTerms.slice(0, 4).map(
+              (term) => `${term}${region ? ` ${region}` : ''} B2B supplier`,
+            ),
+          ];
+          const serpOptions = countryCode ? { countryCode, location: region } : undefined;
+          const locationResults = await Promise.all(
+            locationQueries.map((q) => serpApiService.searchWeb(q, 20, serpOptions)),
+          );
+          flatResults = locationResults.flat();
+
+          // Fallback to broader search only if no results found for the specific location
+          if (flatResults.length === 0) {
+            await emitSSE(sessionId, SEARCH_STATUS_EVENTS.SEARCHING, {
+              message: `No results found for ${region ?? countryCode}. Expanding search globally...`,
+            });
+            const fallbackQueries = [
+              `${query} supplier vendor company`,
+              ...interpretation.searchTerms.slice(0, 3).map((term) => `${term} B2B supplier`),
+            ];
+            const fallbackResults = await Promise.all(
+              fallbackQueries.map((q) => serpApiService.searchWeb(q, 20)),
+            );
+            flatResults = fallbackResults.flat();
+          }
+        }
 
         // Stage 3: Extract vendors with Claude
         await emitSSE(sessionId, SEARCH_STATUS_EVENTS.ENRICHING, {
